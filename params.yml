@@ -1,0 +1,21 @@
+data_path: /links/groups/treutlein/DATA/imaging/charmel/publication_example_data_2/
+proj_path: /home/pwahle/4i_publication_repo_2/
+
+cycles: 
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 11
+        - 12
+            
+to_collagen_mask: ['GLRA2','YAP1','NPC','RB1']
+
+            

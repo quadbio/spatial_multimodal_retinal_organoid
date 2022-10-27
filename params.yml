@@ -1,5 +1,5 @@
 data_path: /links/groups/treutlein/DATA/imaging/charmel/publication_example_data_3/ #set path to the directory containing 'raw_data'.
-proj_path: /home/pwahle/git_test/4i_publication_repo_2/ #set path to the directory containing this file.
+proj_path: /home/pwahle/git_test/4i_publication_repo/ #set path to the directory containing this file.
 
 cycles: 
         - 0

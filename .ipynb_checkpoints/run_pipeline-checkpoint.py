@@ -16,7 +16,7 @@ globals().update(cfg)
 for i in wells:
     print(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
     print('Processing point:',i)
-    modules.simple_mask(point=i, cycle=ref_cycle,
+    modules.simple_mask(point=i, cycle=ref_cycles[0],
                 dir_input=data_path,
                 dir_output=data_path + 'masks/',
                 save=True,

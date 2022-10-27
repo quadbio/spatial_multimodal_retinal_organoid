@@ -1,25 +1,18 @@
 
-import sys
-sys.path.append('/home/pwahle/4i_publication_repo_2/')
-
 import yaml 
 import importlib
-#load parameters
-with open("/home/pwahle/4i_publication_repo_2/params.yml", 'r') as ymlfile: 
-   cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
-
-globals().update(cfg)
-
 import modules 
 from time import gmtime, strftime
 import os
 from pathlib import Path
 
-wells = [43,44] # corresponds to x.tif name wells 43 and 50. Script assumes that images are numbered continuous from 0 to x.
-ref_cycle = 2 #
-ref_cycles = [2,7,12,17] # choose multiple if appropriate
-cycles_bg = [0,6,12]
+#load global variables and parameters
+with open("params.yml", 'r') as ymlfile: 
+   cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
+globals().update(cfg)
+
+#################-----------------------------------------------------------------########################
 for i in wells:
     print(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
     print('Processing point:',i)

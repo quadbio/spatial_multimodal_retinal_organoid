@@ -19,3 +19,7 @@ cycles:
 to_collagen_mask: ['GLRA2','YAP1','NPC','RB1']
 
             
+wells: [43,44] # corresponds to x.tif name wells 43 and 50. Script assumes that images are numbered continuous from 0 to x.
+#ref_cycle: 2 #
+ref_cycles: [2,7,12,17] # choose multiple if appropriate
+cycles_bg: [0,6,12] #background cycles in which ABs were eluted but not restained.

@@ -1,15 +1,5 @@
-# rotator.py - function collection for retina organoid image analysis pipeline
-import sys
-sys.path.append('/home/pwahle/4i_publication_repo_2/')
-
 import yaml 
 import importlib
-#load parameters
-with open("/home/pwahle/4i_publication_repo_2/params.yml", 'r') as ymlfile: 
-   cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
-
-globals().update(cfg)
-
 from skimage.filters import (gaussian, threshold_otsu)
 from skimage import img_as_uint
 import matplotlib.pyplot as plt
@@ -25,6 +15,12 @@ from time import gmtime, strftime
 import copy
 import re
 import cv2
+
+#load global variables
+with open("params.yml", 'r') as ymlfile: 
+   cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+globals().update(cfg)
+
 #################-----------------------------------------------------------------########################
 #generic functions
 def sorted_nicely( l ):

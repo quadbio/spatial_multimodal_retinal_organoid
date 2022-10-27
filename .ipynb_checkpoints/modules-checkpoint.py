@@ -739,7 +739,7 @@ def MTU_assignment(well = 43,
     pixel_matrix = np.load(Path(dir_matrix, str(well) + 'scaled_z_normalised_pixel_matrix.npz'))['arr_0']
     
     #exclude unwanted stains from pixel matrix
-    with open(Path(proj_path, "metadata.yml"), 'r') as ymlfile: 
+    with open(Path("metadata.yml"), 'r') as ymlfile: 
         colnames = yaml.load(ymlfile, Loader=yaml.FullLoader)
     keep = [colnames.index(x) for x in colnames if x != 'excluded']
     marker_names = [x for x in colnames if x != 'excluded']

@@ -89,7 +89,7 @@ for condition in conditions:
                              fusion_matrix = True)
  
 if not os.path.isfile(Path(data_path, 'fSOM_output/fSOM.rds')):
-                      subprocess.call (Path(proj_path,'fSOM.R'))   
+                      subprocess.call('fSOM.R') 
 
 for well in wells:
     modules.run_nuclear_features_table(well = well,

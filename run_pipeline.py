@@ -5,6 +5,7 @@ import modules
 from time import gmtime, strftime
 import os
 from pathlib import Path
+import subprocess
 
 #load global variables and parameters
 with open("params.yml", 'r') as ymlfile: 
@@ -86,17 +87,14 @@ for condition in conditions:
                              dir_input = Path(data_path, 'pixel_matrices'),
                              dir_output = Path(data_path,'pixel_matrices'), 
                              fusion_matrix = True)
-    
-print('run fSOM.R script now.')
+ 
+if not os.path.isfile(Path(data_path, 'fSOM_output/fSOM.rds')):
+                      subprocess.call (Path(proj_path,'fSOM.R'))   
 
-answer = input('once fSOM.R was run please type [y] to continue.')
-
-if answer == 'y':
-    for well in wells:
-        modules.MTU_assignment(well = well, 
-                       k = 20, 
-                       dir_matrix = Path(data_path, 'pixel_matrices'),
-                       dir_output = Path(data_path, 'MTU_results'),
-                       dir_fSOM = Path(data_path, 'fSOM_output'))
-else:
-    print('MTUs cannot be generated without the fSOM_output/som_codes.npz file.')
+for well in wells:
+    modules.run_nuclear_features_table(well = well,
+                             dir_input = Path(data_path,'bg_subtracted'),
+                             dir_nuclei = Path(data_path,'segmented_nuclei'),
+                             dir_MTU_img = Path(data_path, 'MTU_results'),
+                             dir_output = Path(data_path,'feature_tables'),
+                             )

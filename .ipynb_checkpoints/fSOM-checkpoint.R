@@ -1,3 +1,5 @@
+#! /usr/bin/Rscript
+
 library(reticulate)
 use_condaenv("conda_3.7.9", required=TRUE)
 Sys.unsetenv("LD_LIBRARY_PATH")
@@ -10,9 +12,10 @@ library(yaml)
 
 np <- import("numpy")
 
+params = read_yaml('params.yml')
 
-if (!file.exists(paste0(data.path, '/fSOM_output/fSOM.rds'))){
-pixel_matrix <- np$load(paste0(data.path, 'pixel_matrices/scaled_fusion_sub250_z_normalised_pixel_matrix.npz'))
+if (!file.exists(paste0(params$data_path, '/fSOM_output/fSOM.rds'))){
+pixel_matrix <- np$load(paste0(params$data_path, 'pixel_matrices/scaled_fusion_sub250_z_normalised_pixel_matrix.npz'))
 pixel_matrix = pixel_matrix$f[["arr_0"]]
 
 colnames = read_yaml('metadata.yml')

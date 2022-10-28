@@ -561,7 +561,7 @@ def generate_pixel_matrices(well = 0,
         stains.append(img_df[img_df['file'] == i]['stain'].values[0])
     stains.insert(0, 'hoechst')
     
-    with open('/home/pwahle/4i_publication_repo_2/metadata.yml', 'w') as outfile:
+    with open('metadata.yml', 'w') as outfile:
         yaml.dump(stains, outfile, default_flow_style=False)
 
     to_collagen_mask = img_df[(img_df['well_id'] == well)&(img_df['stain'].isin(to_collagen_mask))]['file'].to_list()
@@ -758,6 +758,9 @@ def MTU_assignment(well = 43,
     phgr_node_labels = phgr_node_labels+cluster_labels_unique.min()*-1+1
     cluster_labels_unique = np.unique(phgr_node_labels)
     n_clusters = len(cluster_labels_unique)
+    #save n_MTUs to yaml file for later access
+    with open('n_MTUs.yml', 'w') as outfile:
+        yaml.dump(n_clusters, outfile, default_flow_style=False)
                          
     #map pixels to phenograph clusters by euclidean distance using parallel computing (creating MTUs)
     split = np.array_split(pixel_matrix,500)
@@ -904,6 +907,128 @@ def MTU_assignment(well = 43,
     
     
 #################-----------------------------------------------------------------########################
+#generate nuclear feature tables
+def percentiles(regionmask, intensity_image):
+    return np.percentile(intensity_image[regionmask], q=(5, 50, 95))
+
+def std(regionmask, intensity_image):
+        return np.std(intensity_image[regionmask])
+    
+def pixelcount(regionmask, intensity_image):
+    return np.sum(intensity_image[regionmask])
+
+def skewness(regionmask, intensity_image):
+    from scipy.stats import skew, kurtosis
+    return skew(intensity_image[regionmask])
+
+def kurtosisness(regionmask, intensity_image):
+    from scipy.stats import skew, kurtosis
+    return kurtosis(intensity_image[regionmask])
+
+def clusterbynuc(regionmask, intensity_image):
+    tmp = intensity_image[regionmask]
+    frequency = np.unique(tmp, return_counts=True)
+    n_clusters = 26 #automate
+    index = np.asarray(np.where(~np.in1d(np.arange(n_clusters)+1,frequency[0])))
+    for n in index[0]:
+        frequency = np.insert(frequency,n, [0], axis = 1)
+        
+    return frequency[1][1:]
+
+marker_independent_properties = ('area',
+                             'bbox_area',
+                             'centroid',
+                             'convex_area',
+                             'eccentricity',#[0-1]
+                             'equivalent_diameter',
+                             'extent',
+                             'feret_diameter_max',#longest distance between to points in convex hull ? = major axis length?
+                             'label',
+                             'major_axis_length', 
+                             'minor_axis_length',
+                             'perimeter',
+                             'solidity')
+
+def run_nuclear_features_table(well = 43,
+                             dir_input = Path(data_path,'bg_subtracted'),
+                             dir_nuclei = Path(data_path,'segmented_nuclei'),
+                             dir_MTU_img = Path(data_path, 'MTU_results'),
+                             dir_output = Path(data_path,'feature_tables'),
+                             ):
+
+    from skimage.measure import regionprops_table
+    import pandas as pd
+    
+    if not os.path.isfile(Path(dir_output, str(well)+'.csv')):
+            print('extracting nuclei features ' + str(well))
+
+            nuclei = io.imread(Path(dir_nuclei, str(well) + '.tif'))
+            
+
+            props = regionprops_table(nuclei,
+                          properties=marker_independent_properties)
+            
+            marker_independent_property_table = pd.DataFrame(props)
+            marker_independent_property_table['well'] = well
+                
+                
+            with open(Path("metadata.yml"), 'r') as ymlfile: 
+                stains = yaml.load(ymlfile, Loader=yaml.FullLoader)
+                
+            img_df = get_metadata(dir_input)
+            tmp = {}
+            for stain in stains:
+                    filename = img_df[(img_df['stain'] == stain) & (img_df['well_id'] == well)]['file'].values[0]
+                    img = io.imread(Path(dir_input,filename))
+                
+                    props = regionprops_table(nuclei,intensity_image=img, properties=['mean_intensity'], extra_properties=(percentiles, std, pixelcount, skewness, kurtosisness))
+                    
+                    internal_tmp = pd.DataFrame(props)
+                    numes = internal_tmp.columns
+                    newnames = [s + '_' + stain for s in numes]
+                    internal_tmp.columns = newnames
+                    
+                    tmp[stain] = internal_tmp
+                    
+            marker_dependent_property_table = pd.concat(tmp, axis=1)
+            marker_dependent_property_table.columns = marker_dependent_property_table.columns.droplevel()
+            
+            
+            
+            with open(Path("n_MTUs.yml"), 'r') as ymlfile: 
+                n_clusters = yaml.load(ymlfile, Loader=yaml.FullLoader)
+                
+            def clusterbynuc(regionmask, intensity_image, n_clusters = n_clusters):
+                tmp = intensity_image[regionmask.astype('bool')]
+                frequency = np.unique(tmp, return_counts=True)
+                index = np.asarray(np.where(~np.in1d(np.arange(n_clusters+1),frequency[0])))
+                for n in index[0]:
+                    frequency = np.insert(frequency,n, [0], axis = 1)
+                
+                return frequency[1][1:]
+            
+            labelimg = io.imread(Path(dir_MTU_img, str(well), 'labelimg.tif'))
+            props = regionprops_table(nuclei, intensity_image = labelimg, extra_properties = (clusterbynuc,))
+            clustercount = pd.DataFrame(np.vstack(props['clusterbynuc']))
+            MTUs = np.arange(n_clusters)+1
+            string = 'MTU_count_'
+            colnames = [string + str(s) for s in MTUs]
+            clustercount.columns = colnames
+            
+            mask = io.imread(Path(data_path, 'masks', 'cropped_refined_mask' + str(well) + '.tif')).astype('bool')
+            dist = ndimage.distance_transform_edt(mask)
+            
+            props = regionprops_table(nuclei, intensity_image=dist,
+                              properties=['mean_intensity'])
+            radial_distance = pd.DataFrame(props)
+            radial_distance.columns = ['radial distance']
+            radial_distance['organoid_size'] = sum(sum(mask))
+
+            property_table = pd.concat([marker_independent_property_table,marker_dependent_property_table,clustercount,radial_distance], axis = 1)
+            
+            os.makedirs(Path(dir_output), exist_ok=True)
+            property_table.to_csv(Path(dir_output, str(well) + '_feature_table.csv'), sep=',', line_terminator='\n', encoding = "ISO-8859-1")
+                                  
 ######above this line are functions that were used in the example processing. below not yet###########
 
 def check_refined_mask(point, dir_mask='/links/groups/treutlein/DATA/imaging/charmel/masks', dir_mask_refined='/links/groups/treutlein/DATA/imaging/charmel/refined_masks'):

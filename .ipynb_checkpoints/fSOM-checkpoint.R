@@ -1,5 +1,6 @@
 #! /usr/bin/Rscript
-print(getwd())
+print(paste0('running fSOM in R using ', R.Version()$version.string))
+
 library(reticulate)
 use_condaenv("conda_3.7.9", required=TRUE)
 Sys.unsetenv("LD_LIBRARY_PATH")

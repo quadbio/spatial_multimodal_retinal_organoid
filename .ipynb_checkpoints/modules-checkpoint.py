@@ -959,7 +959,7 @@ def run_nuclear_features_table(well = 43,
     from skimage.measure import regionprops_table
     import pandas as pd
     
-    if not os.path.isfile(Path(dir_output, str(well)+'.csv')):
+    if not os.path.isfile(Path(dir_output, str(well) + '_feature_table.csv')):
             print('extracting nuclei features ' + str(well))
 
             nuclei = io.imread(Path(dir_nuclei, str(well) + '.tif'))
@@ -1028,6 +1028,8 @@ def run_nuclear_features_table(well = 43,
             
             os.makedirs(Path(dir_output), exist_ok=True)
             property_table.to_csv(Path(dir_output, str(well) + '_feature_table.csv'), sep=',', line_terminator='\n', encoding = "ISO-8859-1")
+    else:
+        print('nuclei features already exist' + str(well))
                                   
 ######above this line are functions that were used in the example processing. below not yet###########
 

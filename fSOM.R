@@ -1,5 +1,5 @@
 #! /usr/bin/Rscript
-
+print(getwd())
 library(reticulate)
 use_condaenv("conda_3.7.9", required=TRUE)
 Sys.unsetenv("LD_LIBRARY_PATH")
@@ -38,7 +38,7 @@ set.seed(1234)
 fSOM = FlowSOM::ReadInput(data_FlowSOM, transform = FALSE, scale = FALSE)
 fSOM = FlowSOM::BuildSOM(fSOM, colsToUse = marker_cols, ydim = ydim_SOM, xdim = xdim_SOM, distf = dist_metric, rlen = num_runs)
 
-dir.create(paste0(data.path, '/fSOM_output/'), recursive = TRUE)
+dir.create(paste0(params$data.path, '/fSOM_output/'), recursive = TRUE)
 saveRDS(fSOM, file = paste0(params$data_path, '/fSOM_output/fSOM.rds'))
 som_codes = fSOM$map$codes
 np$savez_compressed(paste0(params$data_path, '/fSOM_output/som_codes.npz'), som_codes)

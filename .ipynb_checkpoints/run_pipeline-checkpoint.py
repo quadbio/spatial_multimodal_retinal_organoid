@@ -16,7 +16,7 @@ r_path = str(Path('/usr/local/R-4.0.3/bin/Rscript')) # path to r interpreter
 #################-----------------------------------------------------------------########################
 for well in wells:
     print(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
-    print('simple masking sample:' + well)
+    print('simple masking sample:' + str(well))
     modules.simple_mask(point=well, cycle=ref_cycles[0],
                 dir_input=data_path,
                 dir_output=data_path + 'masks/',
@@ -33,7 +33,7 @@ for well in wells:
     for i in filenames:
         items.append(Path(data_path,'aligned', i)) 
     
-    print('aligning well '+ well)
+    print('aligning well '+ str(well))
     if not (all(os.path.isfile(i) for i in items)):
         modules.run_elastix(point = well,
                     ref_cycles = ref_cycles,
@@ -43,11 +43,11 @@ for well in wells:
     else:
         print('well ' + str(well) + ' already aligned')
 
-    print('denoising well '+ well)
+    print('denoising well '+ str(well))
     modules.denoise_well(well = well)
     
     
-    print('refigning mask well '+ well)
+    print('refigning mask well '+ str(well))
     modules.refine_mask(well = well)
     
     
@@ -58,7 +58,7 @@ for well in wells:
     for i in filenames:
         items.append(Path(data_path,'bg_subtracted', i)) 
         
-    print('subtracting backgrounds well '+ well)
+    print('subtracting backgrounds well '+ str(well))
     if not (all(os.path.isfile(i) for i in items)):
         modules.bg_subtraction(well = well,
                         dir_input=Path(data_path,'denoised'),
@@ -67,13 +67,13 @@ for well in wells:
                         cycles_bg=[0, 6, 12],
                         cycle_hoechst = 1)
     
-    print('segmenting nuclei well '+ well)
+    print('segmenting nuclei well '+ str(well))
     modules.segment_nuclei(well = well, 
                            ref_cycle = 0, 
                            dir_input = Path(data_path, 'denoised'), 
                            dir_output = Path(data_path, 'segmented_nuclei'))
    
-    print('generating pixel matrix well '+ well)
+    print('generating pixel matrix well '+ str(well))
     modules.generate_pixel_matrices(well = well,
                          dir_input = Path(data_path,"bg_subtracted"),
                          dir_output = Path(data_path,'pixel_matrices/'),

@@ -262,25 +262,24 @@ def run_elastix(point, ref_cycles, dir_mask, dir_output, cycles = cycles,
 
           # Set new reference cycle if necessary
 
-          if cycle in ref_cycles:
-              ref_cycle = cycle
-              print('Setting reference to:', ref_cycle)
-                
-              r = re.compile(".*hoechst")
-              filename = list(filter(r.match, filenames))
-              fixed_img = io.imread(Path(dir_output,filename[0]))
-              new_mask = fixed_img.copy()
-              new_mask = np.where(new_mask > 1, 1, 0)
-              new_mask = ndimage.binary_fill_holes(new_mask).astype(int)
-              fixed_mask = initial_mask * new_mask
-              print('Loaded new fixed image and mask.')
-        if (cycle in ref_cycles) & (os.path.isfile(Path(dir_output,filenames[2]))):
+        if cycle in ref_cycles:
+            ref_cycle = cycle
+            print('Setting reference to:', ref_cycle)
+              
             r = re.compile(".*hoechst")
             filename = list(filter(r.match, filenames))
-            print('sample ', point, ' cycle ',cycle, ' already done.loading reference image', filename[0])
             fixed_img = io.imread(Path(dir_output,filename[0]))
-        else:
-            print('sample ', point, ' cycle ',cycle, ' already done. skipping')
+            new_mask = fixed_img.copy()
+            new_mask = np.where(new_mask > 1, 1, 0)
+            new_mask = ndimage.binary_fill_holes(new_mask).astype(int)
+            fixed_mask = initial_mask * new_mask
+            print('Loaded new fixed image and mask.')
+        #if (cycle in ref_cycles) & (os.path.isfile(Path(dir_output,filenames[2]))):
+        #    r = re.compile(".*hoechst")
+        #    filename = list(filter(r.match, filenames))
+        #    print('sample ', point, ' cycle ',cycle, ' already done.loading reference image', filename[0])
+        #    fixed_img = io.imread(Path(dir_output,filename[0]))
+            
 #################-----------------------------------------------------------------########################
 #denoise images, crop to size of simple mask to speed up the procedure
 def crop_image(img = 'img', mask = 'mask'):        

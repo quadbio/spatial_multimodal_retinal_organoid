@@ -40,11 +40,11 @@ fSOM = FlowSOM::ReadInput(data_FlowSOM, transform = FALSE, scale = FALSE)
 fSOM = FlowSOM::BuildSOM(fSOM, colsToUse = marker_cols, ydim = ydim_SOM, xdim = xdim_SOM, distf = dist_metric, rlen = num_runs)
 
 #dir.create(paste0(params$data.path, '/fSOM_output/'), recursive = TRUE)
-saveRDS(fSOM, file = 'fSOM.rds')
+saveRDS(fSOM, file = paste0(params$data_path, '/fSOM_output/fSOM.rds'))
 som_codes = fSOM$map$codes
-np$savez_compressed('som_codes.npz', som_codes)
+np$savez_compressed(paste0(params$data_path, '/fSOM_output/som_codes.npz'), som_codes)
 } else {
-  fSOM = readRDS('fSOM.rds'))
+  fSOM = readRDS(paste0(params$data_path, '/fSOM_output/fSOM.rds'))
   som_codes = fSOM$map$codes
 }
 

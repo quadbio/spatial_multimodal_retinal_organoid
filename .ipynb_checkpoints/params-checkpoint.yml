@@ -1,0 +1,24 @@
+#data_path: /links/groups/treutlein/DATA/imaging/charmel/publication_example_data_2/ #set path to the directory containing 'raw_data'.
+data_path: '/home/pwahle/4i_publication_repo_2/data/'
+
+cycles: 
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 11
+        - 12
+            
+to_collagen_mask: ['GLRA2','YAP1','NPC','RB1']
+
+            
+wells: [43,44] # corresponds to x.tif name wells 43 and 50. Script assumes that images are numbered continuous from 0 to x.
+ref_cycles: [2,7,12,17] # choose multiple if appropriate. The first reference cycle is the one to which all image are aligned. once the next reference cycle is aligned it will become the new reference cycle. this helps in case the hoechst staining degrades, as is the case in this data set.
+cycles_bg: [0,6,12] #background cycles in which ABs were eluted but not restained.

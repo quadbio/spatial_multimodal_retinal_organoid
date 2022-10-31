@@ -1,4 +1,5 @@
-data_path: /links/groups/treutlein/DATA/imaging/charmel/publication_example_data_2/ #set path to the directory containing 'raw_data'.
+#data_path: /links/groups/treutlein/DATA/imaging/charmel/publication_example_data_2/ #set path to the directory containing 'raw_data'.
+data_path: '/home/pwahle/4i_publication_repo_2/data/'
 
 cycles: 
         - 0

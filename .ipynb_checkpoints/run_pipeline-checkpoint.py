@@ -89,9 +89,16 @@ for condition in conditions:
                              dir_output = Path(data_path,'pixel_matrices'), 
                              fusion_matrix = True)
 
-
+os.makedirs(Path(data_path, 'fSOM_output'), exist_ok=True)
 if not os.path.isfile(Path(data_path, 'fSOM_output/fSOM.rds')):
                       subprocess.run([r_path,'fSOM.R'])
+
+for well in wells:
+    modules.MTU_assignment(well = well, 
+                   k = 20, 
+                   dir_matrix = Path(data_path, 'pixel_matrices'),
+                   dir_output = Path(data_path, 'MTU_results'),
+                   dir_fSOM = Path(data_path, 'fSOM_output'))
 
 for well in wells:
     modules.run_nuclear_features_table(well = well,

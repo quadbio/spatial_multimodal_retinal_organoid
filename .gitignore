@@ -1,3 +1,6 @@
+.DS_Store
+.ipynb_checkpoints
+.idea
 debugging.ipynb
 metadata.yml
 n_MTUs.yml

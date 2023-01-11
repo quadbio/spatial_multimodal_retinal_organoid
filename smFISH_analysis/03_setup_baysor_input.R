@@ -1,6 +1,11 @@
 library(tidyverse)
-dir_results <- '/links/groups/treutlein/DATA/imaging/charmel/32955-slide928-2_submission'
 
+# prepare data structure for baysor bash-script
+dir_results <- 'data/raw/fish/spot_data'
+dir_output <- 'data/processed/fish/baysor'
+dir.create(dir_output)
+
+# move and rename spot data
 files_spots <- list.files(dir_results, pattern = '.txt', full.names = TRUE)
 names(files_spots) <- list.files(dir_results, pattern = '.txt')
 df_spots <- map(files_spots,read_tsv, col_names=FALSE) %>%
@@ -12,15 +17,15 @@ df_spots <- map(files_spots,read_tsv, col_names=FALSE) %>%
   filter(!ID %in% c('D2-1','D2-2')) %>% rename(organoid = ID)
 
 for (i in unique(df_spots$organoid)){
-   dir <- paste0('/links/groups/treutlein/DATA/imaging/charmel/32955-slide928-2_submission/baysor/', i)
+   dir <- paste0('data/processed/fish/baysor/', i)
    dir.create(dir)
    write_csv(df_spots %>%
                filter(organoid == i) %>%
                rename(gene=transcript), paste0(dir,'/','spots.csv'))
  }
 
-dir <- paste0('/links/groups/treutlein/DATA/imaging/charmel/32955-slide928-2_submission/segmented')
-dir_output <- '/links/groups/treutlein/DATA/imaging/charmel/32955-slide928-2_submission/baysor'
+# move segmentation label images
+dir <- paste0('data/processed/fish/segmented')
 files <- list.files(dir, full.names = TRUE)
 names(files) <- list.files(dir)
 for (file in seq_along(files)){

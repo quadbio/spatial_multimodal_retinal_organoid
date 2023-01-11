@@ -1,18 +1,20 @@
 # set working directory
-setwd('/home/charmel/4i_organoid_pipeline/retina/integration_pipeline_4I_scRNA_scATAC')
+setwd('integration_4i_sc_rna_atac')
 
 # set result directory
-dir_results <- '/links/groups/treutlein/DATA/imaging/charmel/seq_integration_rev/'
+dir_results <- 'data/processed/4i/seq_integration/'
+dir.create(dir_results)
 
 # load functions
 source('utils.R')
 
 # load meta files
-source('load_meta_files.R')
+df_conditions <- read_csv('data/raw/4i/df_conditions.csv')
+df_meta <- read_csv('data/raw/4i/df_meta.csv')
 
 # load scRNA-seq dataset
 message('Loading scRNA-seq data...')
-seu_rna <- readRDS('/links/groups/treutlein/USERS/zhisong_he/Work/retina_organoids_timecourse/analysis/data.integrated_onlyRetina_RNA-ATAC_paired.seurat.rds')
+seu_rna <- readRDS('data/processed/rna-atac/metacells_RNA_ATAC.seurat.rds')
 
 message('Rescaling data for all RNA features...')
 seu_rna <- seu_rna %>% ScaleData(features=.@assays$RNA@data %>% rownames())
@@ -30,16 +32,8 @@ names(points) <- as.character(points)
 options(future.globals.maxSize= 891289600*20)
 future::plan('multisession', workers = 20, gc=TRUE)
 
-# run import of 4i nuclei data
-seu_objects_4i <- future_map(points, import_4i, log_transform = TRUE, dim = 10)
-seu_objects_4i <- seu_objects_4i[!map(seu_objects_4i, is_bare_list) %>% unlist]
-
-# save imported 4i datasets
-message('Saving 4i nuclei seurat objects...')
-saveRDS(seu_objects_4i, paste0(dir_results,'4i_nuclei.rds'))
-
-#message('Loading 4i nuclei...')
-#seu_objects_4i <- readRDS(paste0(dir_results,'4i_nuclei.rds'))
+message('Loading 4i nuclei...')
+seu_objects_4i <- readRDS('data/processed/4i/4i_nuclei.rds')
 
 # run integration pipeline by timepoints
 message('Running integration pipeline for each timepoint...')

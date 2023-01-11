@@ -5,7 +5,7 @@
 
 setwd('/home/charmel/4i_organoid_pipeline/retina/rotator_analysis/retina_fish_windows')
 source('../utils.R')
-source('0_utils_compare.R')
+source('utils_compare.R')
 # Load libraries
 library(tidyverse)
 library(destiny)

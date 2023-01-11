@@ -1,8 +1,3 @@
-# Title     : utils.R
-# Objective : function collection for the 4i/sc-seq integration pipeline
-# Created by: harmelc
-# Created on: 25.11.21
-
 # load libraries
 library(tidyverse)
 library(Seurat)
@@ -12,105 +7,6 @@ library(harmony)
 library(furrr)
 library(pracma)
 library(secr)
-
-# sanity check function for loading raw data
-check_datasets <- function(point){
-  dir <- '/links/groups/treutlein/DATA/imaging/charmel/seq_integration/nuclei_expression/'
-  file <- str_c('expression_by_nucleus_',point,'.txt')
-  path <- str_c(dir,file)
-  if (file.exists(path)) {
-  df <- read.csv(path, sep = ' ', fileEncoding = 'ISO-8859-1') %>%
-      as_tibble() %>% rename(ID=X)
-  return(df)}
-  else{list()}
-}
-
-message('Loading integration and mapping functions...')
-# define import function
-import_4i <- function(point, normalized=FALSE, log_transform=FALSE, dim=30, filter_area=NULL){
-  print(paste('Processing point: ', point))
-  dir <- '/links/groups/treutlein/DATA/imaging/charmel/seq_integration/nuclei_expression/'
-  if(normalized){
-    print('Using normalized dataset.')
-    file <- str_c('expression_by_nucleus_znormalized_',point,'.txt')
-  } else {
-    file <- str_c('expression_by_nucleus_',point,'.txt')
-  }
-  path <- str_c(dir,file)
-  if (file.exists(path)) {
-    df <- read.csv(path, sep = ' ', fileEncoding = 'ISO-8859-1') %>%
-      as_tibble() %>% rename(ID=X)
-    if(!is.null(filter_area)){
-      df <- df %>% filter(area>filter_area[1], area<filter_area[2])
-    }
-    df_2 <- df %>% select(DNM1:excluded.GABA)
-    colnames_sorted <- df_2 %>% colnames() %>% sort()
-    df_2 <- df_2[,colnames_sorted]
-    colnames(df_2) <- colnames(df_2) %>% str_replace('TUBA4AÃ.', 'TUBA4A')
-    colnames(df_2) <- colnames(df_2) %>% str_replace('TUBA4AE', 'TUBA4A')
-    df_2 <- df_2[,!grepl('excluded',colnames(df_2))] %>%
-      select(-c('MAPK1.MAPK3','Serotonin','NPC','IER5')) %>%
-      rename(POU4F2=POU4F1)
-    count_matrix <- df_2  %>% as.matrix() %>% t()
-    if(log_transform){
-      count_matrix <- log(count_matrix + 1)
-    }
-    colnames(count_matrix) <- df %>% pull(ID)
-    seu_4i <- CreateSeuratObject(count_matrix)
-    seu_4i@meta.data <- seu_4i@meta.data %>% mutate(ID=df %>% pull(ID), organoid = point,
-                                                    X = df %>% pull(centroid.1,),
-                                                    Y = df %>% pull(centroid.0))
-     # filter out all nuclei that are out of mask -> sum of all features = 0
-    seu_4i <- seu_4i[,!colSums(seu_4i@assays$RNA@data) == 0]
-    seu_4i <- seu_4i %>% ScaleData() %>% FindVariableFeatures() %>% RunPCA() %>%
-      FindNeighbors(dims = 1:dim) %>% FindClusters(resolution = 0.5) %>%
-      RunUMAP(dims=1:dim)
-    return(seu_4i)
-  } else {
-    return(list())
-  }
-}
-
-import_4i_conditions_data <- function(point, log_transform=TRUE, dim=10, filter_area=NULL){
-  print(paste('Processing point: ', point))
-  dir <- '/links/groups/treutlein/DATA/imaging/4i_projects/Retina_4i_PW_new/feature_tables/'
-  file <- str_c('nuclear_features',point,'.csv')
-  path <- str_c(dir,file)
-  if (file.exists(path) & file.info(path)$size > 0) {
-    df <- read.csv(path) %>%
-      as_tibble() %>% rename(organoid=ID) %>% rename(ID=X) %>%
-      mutate(ID = str_c(ID, organoid, sep='_')) %>%
-      select(-contains('expanded')) %>%
-      select(ID,centroid.0,centroid.1,condition,area,contains('mean')) %>%
-      rename_with(~str_remove(.x,'mean_intensity_'))
-    if(!is.null(filter_area)){
-      df <- df %>% filter(area>filter_area[1], area<filter_area[2])
-    }
-    df_2 <- df %>% select(-c('ID','centroid.0','centroid.1','condition','area','DAPI'))
-    colnames_sorted <- df_2 %>% colnames() %>% sort()
-    df_2 <- df_2[,colnames_sorted]
-    count_matrix <- df_2  %>% as.matrix() %>% t()
-    if(log_transform){
-      count_matrix <- round(count_matrix * 65535) # restore 16 bit values
-      count_matrix <- log(count_matrix + 1)
-    }
-    colnames(count_matrix) <- df %>% pull(ID)
-    seu_4i <- CreateSeuratObject(count_matrix)
-    seu_4i@meta.data <- seu_4i@meta.data %>% mutate(ID=df %>% pull(ID),
-                                                    organoid = point,
-                                                    X = df %>% pull(centroid.1,),
-                                                    Y = df %>% pull(centroid.0))
-     # filter out all nuclei that are out of mask -> sum of all features = 0
-    seu_4i <- seu_4i[,!colSums(seu_4i@assays$RNA@data) == 0]
-    seu_4i <- seu_4i %>% ScaleData() %>% FindVariableFeatures() %>% RunPCA() %>%
-      FindNeighbors(dims = 1:dim) %>% FindClusters(resolution = 0.5) %>%
-      RunUMAP(dims=1:dim)
-    return(seu_4i)
-  } else {
-    return(list())
-  }
-}
-
 
 # define function for CCA integration of 4I datasets
 integrate_4i <- function(seu_objects, dim=30){
@@ -310,3 +206,4 @@ calculate_distances_to_contour <- function (point, df_nuclei, df_contours){
     mutate(distance_to_contour = get_distance_to_contour(ids = ID, x = X, y = Y, df_contours = df_contours))
   return(df_nuclei)
 }
+

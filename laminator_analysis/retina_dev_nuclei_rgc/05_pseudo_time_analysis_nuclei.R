@@ -224,7 +224,6 @@ create_neighborhood_collage(radius=60, df, n=12)
 create_neighborhood_collage(radius=80, df, n=12)
 create_neighborhood_collage(radius=100, df, n=12)
 
-
 create_neighborhood_collage(radius=40, df, n=12, img_type='mtu')
 create_neighborhood_collage(radius=60, df, n=12, img_type='mtu')
 create_neighborhood_collage(radius=80, df, n=12, img_type='mtu')

@@ -15,7 +15,7 @@ generate_convex_hull <- function(cell_id, df){
 }
 
 process_fish <- function(sample, dim=15, log_transform=FALSE,
-                         dir='/links/groups/treutlein/DATA/imaging/charmel/32955-slide928-2_submission/baysor'){
+                         dir='data/processed/fish/baysor'){
   dir_sample <- str_c(dir,sample, 'output', sep='/')
 
   df <- read_csv(str_c(dir_sample,'/segmentation.csv'))
@@ -192,12 +192,12 @@ run_integration_pipeline <- function(fish_samples, week_rna, seu_rna, week_fish,
 
 }
 
-
-dir_results <- '/links/groups/treutlein/DATA/imaging/charmel/seq_integration_fish_redo/'
+# set result directory
+dir_results <- 'data/processed/fish/seq_integration/'
 
 # load scRNA-seq dataset
 message('Loading scRNA-seq data...')
-seu_rna <- readRDS('/links/groups/treutlein/USERS/zhisong_he/Work/retina_organoids_timecourse/analysis/data.integrated_onlyRetina_RNA-ATAC_paired.seurat.rds')
+seu_rna <- readRDS('data/processed/rna-atac/metacells_RNA_ATAC.seurat.rds')
 
 message('Rescaling data for all RNA features...')
 seu_rna <- seu_rna %>% ScaleData(features=.@assays$RNA@data %>% rownames())
@@ -208,21 +208,28 @@ seu_rna@meta.data <- seu_rna@meta.data %>% mutate(major_ct=as.character(major_ct
 
 # read in FISH data
 message('Reading in fish data, processing convex hulls, converting seurat...')
-dir_input <- '/links/groups/treutlein/DATA/imaging/charmel/32955-slide928-2_submission/baysor'
+dir_input <- 'data/processed/fish/baysor'
 files <- list.files(dir_input)
 names(files) <- files
-files <- files[files!='run_baysor_dataset.sh']
 list_results <- map(files, process_fish, dir=dir_input)
 
 samples_week32 <- files[str_detect(files,'A|B')]
 samples_week13 <- files[str_detect(files,'C|D')]
+
 options(future.globals.maxSize= 891289600*20)
 future::plan('multisession', workers = length(samples_week13), gc=TRUE)
-run_integration_pipeline(fish_samples=samples_week13, week_rna = c(11,12,13,15), seu_rna=seu_rna, week_fish=13, seu_objects_fish=list_results,
+run_integration_pipeline(fish_samples=samples_week13,
+                         week_rna = c(11,12,13,15),
+                         seu_rna=seu_rna,
+                         week_fish=13,
+                         seu_objects_fish=list_results,
                          dir_results=dir_results)
-#run_integration_pipeline(fish_samples=samples_week13, week_rna = 18, seu_rna=seu_rna, week_fish=18, seu_objects_fish=list_results,
-#                         dir_results=dir_results)
+
 future::plan('multisession', workers = length(samples_week32), gc=TRUE)
-run_integration_pipeline(fish_samples=samples_week32, week_rna=c(30,31,32,34), seu_rna=seu_rna, week_fish=32, seu_objects_fish=list_results,
+run_integration_pipeline(fish_samples=samples_week32,
+                         week_rna=c(30,31,32,34),
+                         seu_rna=seu_rna,
+                         week_fish=32,
+                         seu_objects_fish=list_results,
                          dir_results=dir_results)
-future::plan('multisession', workers = 1, gc=TRUE)
+

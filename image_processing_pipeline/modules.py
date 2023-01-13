@@ -883,7 +883,7 @@ def MTU_assignment(well=43,
     #    text.set_color("white")
 
     ax.set(xlim=[-0.5, width - 0.5], ylim=[height - 0.5, -0.5], aspect=1)
-    fig.savefig(Path(dir_output, str(well), "MTU_imag.pdf"), dpi=dpi, transparent=True)
+    fig.savefig(Path(dir_output, str(well), "MTU_image.pdf"), dpi=dpi, transparent=True)
     plt.close(fig)
 
     print('MTU image pdf done')

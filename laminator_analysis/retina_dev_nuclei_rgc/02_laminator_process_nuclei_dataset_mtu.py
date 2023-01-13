@@ -1,22 +1,19 @@
 import os
 from pathlib import Path
-import numpy as np
-import pandas as pd
 from time import gmtime, strftime
 import re
-from skimage import io
-from tqdm import tqdm
 from skimage.color import rgba2rgb, rgb2gray
+from multiprocessing import Pool, RawArray
+import pandas as pd
+from tqdm import tqdm
+from skimage import io
+import numpy as np
 
 def load_mask(path):
-    from skimage import io
     img = io.imread(path)
     return img
 
 def load_images(paths):
-    from tqdm import tqdm
-    from skimage import io
-    import numpy as np
     imgs = []
     for path in tqdm(paths):
         img = io.imread(path)
@@ -35,11 +32,7 @@ def setup_shared_variables():
     var_dict = {}
 
 def calculate_radial_profiles(df, max_radius, stack, mask, label_img):
-    from multiprocessing import Pool, RawArray
-    from functools import partial
-    import numpy as np
-    from tqdm import tqdm
-    import pandas as pd
+
     df['y']=np.round(df['centroid-0'].values)
     df['x']=np.round(df['centroid-1'].values)
 
@@ -51,25 +44,17 @@ def calculate_radial_profiles(df, max_radius, stack, mask, label_img):
     # Wrap as numpy array and copy data to shared array
     X_np = np.frombuffer(X).reshape(stack.shape)
     np.copyto(X_np, stack)
-    from functools import partial
     # Start the process pool and do the computation
     with Pool(processes=50, initializer=init_worker, initargs=(X, X_shape)) as pool:
         result = pool.starmap(radial_profile_multi, zip(df['x'].values, df['y'].values))
 
     return(result)
 
-dir_images = '/links/groups/treutlein/DATA/imaging/charmel/clustering_results/fusion_znormalized'
-dir_results = '/links/groups/treutlein/DATA/imaging/charmel/laminator_analysis_nuclei_mtu'
-dir_masks = '/links/groups/treutlein/DATA/imaging/charmel/refined_masks'
+dir_images = 'data/processed/4i/MTU_results'
+dir_results = 'data/processed/4i/laminator/results_nuclei_mtu'
+dir_masks = 'data/processed/4i/masks'
 masks = os.listdir(dir_masks)
-masks = [mask for mask in masks if '_pw_' in mask]
 points = os.listdir(dir_images)
-points_exist = [point[0] for point in list(filter(None,[re.findall(r'\d+', point) for point in points]))]
-
-points = os.listdir('/links/groups/treutlein/DATA/imaging/charmel/laminator_analysis_nuclei')
-points = points[30:]
-points = [point for point in points if point in points_exist]
-points = points[6:]
 
 for point in points:
     print('Started laminator in nuclei mode...')
@@ -80,14 +65,13 @@ for point in points:
 
     # set directories and get paths for masks and images
     path_mask = Path(dir_masks, masks[[re.findall(r'\d+', path)[0] for path in masks].index(point)])
-    dir_images_point = Path(dir_images, str(point), 'singleclusterimgs')
+    dir_images_point = Path(dir_images, str(point), 'single_MTU_imgs')
     image_paths = os.listdir(dir_images_point)
-    image_paths = [Path(dir_images_point, path) for path in image_paths if not '._' in path]
     pd.DataFrame({'file':[str(path) for path in image_paths]}).reset_index().to_csv(Path(dir_results_point, 'stain_paths.csv'), index=False)
 
     # load nuclei dataset
     df_nuclei = pd.read_csv(
-        '/links/groups/treutlein/DATA/imaging/charmel/seq_integration/nuclei_expression/expression_by_nucleus_'+point+'.txt',
+        'data/processed/4i/feature_tables/' + point + '_feature_table.csv',
         sep=' ')
 
     # load mask
@@ -95,7 +79,7 @@ for point in points:
     mask = load_mask(path_mask)
 
     # load label image
-    label_img = io.imread('/links/groups/treutlein/DATA/imaging/charmel/segmented/cropped_'+point+'.tif')
+    label_img = io.imread('data/processed/4i/segmented_nuclei/'+point+'.tif')
 
     # load images
     stack = []
@@ -154,5 +138,5 @@ for point in points:
 
     print(strftime("%Y-%m-%d %H:%M:%S", gmtime())+' - Saving results...')
     pd.concat(results).to_csv(Path(dir_results_point, 'df_intensity_profiles.csv'), index=False)
-    print(strftime("%Y-%m-%d %H:%M:%S", gmtime())+' - laminator analysis for sample ' + str(point) + ' completed.')
+    print(strftime("%Y-%m-%d %H:%M:%S", gmtime())+' - Laminator analysis for sample ' + str(point) + ' completed.')
     print()

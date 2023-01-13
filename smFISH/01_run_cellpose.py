@@ -5,7 +5,6 @@ from pathlib import Path
 from tqdm import tqdm
 from skimage import io
 
-
 model = models.Cellpose(model_type='cyto2')
 
 dir_images = 'data/raw/fish/dapi_images_reimaged'

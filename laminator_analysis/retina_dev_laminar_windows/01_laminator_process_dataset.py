@@ -1,22 +1,19 @@
 import os
 from pathlib import Path
-import numpy as np
 from laminator_analysis import laminator
 import pandas as pd
 from time import gmtime, strftime
 import re
 
-dir_images = '/links/groups/treutlein/DATA/imaging/charmel/shiny_input'
-points = os.listdir('/links/groups/treutlein/DATA/imaging/charmel/shiny_input')
-dir_results = '/links/groups/treutlein/DATA/imaging/charmel/laminator_analysis_wo_scaling_2'
-dir_masks = '/links/groups/treutlein/DATA/imaging/charmel/refined_masks'
+dir_images = 'data/raw/4i/images'
+points = os.listdir(dir_images)
+
+dir_results = 'data/processed/4i/laminator/results_protein'
+dir_masks = 'data/processed/4i/masks'
 masks = os.listdir(dir_masks)
-masks = [mask for mask in masks if '_pw_' in mask]
-
-
 
 for point in points:
-    print('Started laminator...')
+    print('Started Laminator...')
     print(strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ' - Processing sample: ' + str(point))
 
     dir_results_point = Path(dir_results, str(point))
@@ -64,6 +61,6 @@ for point in points:
     print(strftime("%Y-%m-%d %H:%M:%S", gmtime())+' - Saving results...')
     df_meta.to_csv(Path(dir_results_point, 'df_meta.csv'), index=False)
     df_intensity_profile.to_csv(Path(dir_results_point, 'df_intensity_profiles.csv'), index=False)
-    print(strftime("%Y-%m-%d %H:%M:%S", gmtime())+' - laminator analysis for sample ' + str(point) + ' completed.')
+    print(strftime("%Y-%m-%d %H:%M:%S", gmtime())+' - Laminator analysis for sample ' + str(point) + ' completed.')
     print()
 

@@ -18,7 +18,6 @@ cycles:
             
 to_collagen_mask: ['GLRA2','YAP1','NPC','RB1']
 
-            
 wells: [43,44] # corresponds to x.tif name wells 43 and 50. Script assumes that images are numbered continuous from 0 to x.
 ref_cycles: [2,7,12,17] # choose multiple if appropriate. The first reference cycle is the one to which all image are aligned. once the next reference cycle is aligned it will become the new reference cycle. this helps in case the hoechst staining degrades, as is the case in this data set.
 cycles_bg: [0,6,12] #background cycles in which ABs were eluted but not restained.

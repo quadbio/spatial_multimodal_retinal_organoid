@@ -1,35 +1,34 @@
-def run_masking(dir_input='/links/groups/treutlein/DATA/imaging/charmel/32955-slide928-2_submission',
-                dir_output='/links/groups/treutlein/DATA/imaging/charmel/32955-slide928-2_submission/masks_from_spots',
+import os
+from skimage.filters import (gaussian, threshold_otsu)
+from skimage import img_as_uint
+import matplotlib.pyplot as plt
+from skimage import io
+from skimage import measure
+from scipy import ndimage
+from pathlib import Path
+from skimage.filters.rank import median
+from skimage.morphology import disk
+from tqdm import tqdm
+from image_processing_pipeline.modules import scale_image
+import numpy as np
+import pandas as pd
+
+def run_masking(dir_output='data/processed/fish/masks_from_spots',
                 save=True,
-                plot=True, save_plot=True, show_plot=False):
-    # Import functions
-    import os
-    from skimage.filters import (gaussian, threshold_otsu)
-    from skimage import img_as_uint
-    import matplotlib.pyplot as plt
-    from skimage import io
-    from skimage import measure
-    from scipy import ndimage
-    from pathlib import Path
-    from skimage.filters.rank import median
-    from skimage.morphology import disk
-    from tqdm import tqdm
-    from image_processing.modules import scale_image
-    import numpy as np
-    import pandas as pd
-    dir_images = Path(dir_input, 'DAPI-lower exposure_submission')
+                plot=True,
+                save_plot=True,
+                show_plot=False):
+
+    dir_images = 'data/raw/fish/dapi_images'
     files = os.listdir(dir_images)
     files = [file for file in files if '._' not in file]
 
-    dir_tables = '/links/groups/treutlein/DATA/imaging/charmel/32955-slide928-2_submission'
+    dir_tables = 'data/raw/fish/spot_data'
     files_tables = [file for file in os.listdir(dir_tables) if not file.startswith('.') and 'results.txt' in file]
 
     for file in tqdm(files, ascii=True):
         img_init = io.imread(Path(dir_images, file))
         point = file.replace('32955-slide928-2_', '').replace('_DAPI.tiff', '')
-        if 'A' in point or 'B' in point:
-            print('Skipping sample.')
-            continue
         file_table = [file for file in files_tables if point in file][0]
         df = pd.read_csv(Path(dir_tables, file_table), sep='\t', names=['x', 'y', 'z', 'transcript'], index_col=False)
 
@@ -44,7 +43,6 @@ def run_masking(dir_input='/links/groups/treutlein/DATA/imaging/charmel/32955-sl
                 img_spots[y, x] = 1
 
         struct = ndimage.generate_binary_structure(2, 2)
-        img_spots_init = img_spots.copy()
         img_spots = np.pad(img_spots, [50, 50], mode='constant')
         img_spots = ndimage.binary_dilation(img_spots, structure=struct, iterations=50).astype('uint8')
         img_spots = ndimage.binary_fill_holes(img_spots).astype('uint8')
@@ -109,7 +107,7 @@ def run_masking(dir_input='/links/groups/treutlein/DATA/imaging/charmel/32955-sl
                 plt.show()
             plt.close('all')
 
+
 if __name__ == '__main__':
-    import sys
-    sys.path.extend(['/home/charmel/4i_organoid_pipeline/retina'])
     run_masking()
+

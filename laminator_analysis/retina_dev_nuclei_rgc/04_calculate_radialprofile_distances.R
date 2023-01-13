@@ -1,8 +1,3 @@
-# Title     : TODO
-# Objective : TODO
-# Created by: harmelc
-# Created on: 25.01.22
-
 suppressPackageStartupMessages({
   library(TSdist)
   library(tidyverse)
@@ -10,11 +5,15 @@ suppressPackageStartupMessages({
   library(FBN)
 })
 
-setwd('/local2/USERS/charmel/rotator_dataset_nuclei/')
+setwd('data/processed/4i/laminator/dataset_nuclei/')
 
 # list files of feature datasets
 files <- list.files(pattern='.csv')
 names(files) <- str_remove(files, '.csv')
+
+# set result direcetory
+dir_results <-  'data/processed/4i/laminator/analysis_results/'
+dir.create(dir_results)
 
 message("Setting up the future...")
 future::plan('multisession', workers = length(files))
@@ -46,7 +45,7 @@ calculate_distances <- function(max_radius, files){
   message(paste0("Calculating fourier distances with future for maximal radius of ",max_radius," ..."))
   distance_matrices <- future_map(files,get_distances_by_feature, measure='fourier', max_radius=max_radius)
   message("Saving fourier distance matrices...")
-  path <- paste0('/local2/USERS/charmel/rotator_analysis_results/distance_matrices_fourier_nuclei_',max_radius,'.rds')
+  path <- paste0(dir_results,'distance_matrices_fourier_nuclei_',max_radius,'.rds')
   saveRDS(distance_matrices, path)
   message(paste('Saved to:',path))
 }

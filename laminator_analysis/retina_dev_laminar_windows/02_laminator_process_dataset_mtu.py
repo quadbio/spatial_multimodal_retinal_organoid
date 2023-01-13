@@ -9,16 +9,14 @@ from tqdm import tqdm
 from skimage import io
 from skimage.color import rgba2rgb, rgb2gray
 
-dir_images = '/links/groups/treutlein/DATA/imaging/charmel/clustering_results/fusion_znormalized'
-points = os.listdir(dir_images)
-points = [point[0] for point in list(filter(None,[re.findall(r'\d+', point) for point in points]))]
-dir_results = '/links/groups/treutlein/DATA/imaging/charmel/laminator_analysis_cluster_2'
-dir_masks = '/links/groups/treutlein/DATA/imaging/charmel/refined_masks'
+dir_images = 'data/processed/4i/MTU_results'
+dir_results = 'data/processed/4i/laminator/results_mtu'
+dir_masks = 'data/processed/4i/masks'
 masks = os.listdir(dir_masks)
-masks = [mask for mask in masks if '_pw_' in mask]
+points = os.listdir(dir_images)
 
 for point in points:
-    print('Started laminator...')
+    print('Started Laminator...')
     print(strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ' - Processing sample: ' + str(point))
 
     dir_results_point = Path(dir_results, str(point))
@@ -27,10 +25,9 @@ for point in points:
     # set directories and get paths for masks and images
 
     path_mask = Path(dir_masks, masks[[re.findall(r'\d+', path)[0] for path in masks].index(point)])
-    dir_images_point = Path(dir_images, str(point), 'singleclusterimgs')
-    hoechst = laminator.load_mask(Path('/links/groups/treutlein/DATA/imaging/charmel/shiny_input',point,'channel_hoechst.tif'))
+    dir_images_point = Path(dir_images, str(point), 'single_MTU_imgs')
+    hoechst = io.imread(Path('data/raw/4i/images',point,'channel_hoechst.tif'))
     image_paths = os.listdir(dir_images_point)
-    image_paths = [Path(dir_images_point, path) for path in image_paths if not '._' in path]
 
     pd.DataFrame({'file':[str(path) for path in image_paths]}).to_csv(Path(dir_results_point, 'stain_paths.csv'))
 

@@ -8,9 +8,15 @@ library(secr)
 library(abind)
 library(scales)
 library(furrr)
-library(magick)
-library(grid)
-library(gridExtra)
+
+remove_incomplete_stains <- function(dist.list){
+  dim <- map(dist.list, nrow)
+  dim <- dim[!map(dim, is.null) %>% unlist()]
+  dims_unique <- unlist(dim) %>% unique() %>% sort(decreasing = TRUE)
+  dim_keep <- dims_unique[1]
+  dim <- dim[map(dim, function(x){x==dim_keep}) %>% unlist()]
+  return(dist.list[names(dim)])
+}
 
 selected_windows <- list('A1-1' = 0:136,
                          'A1-2' = c(0:2, 28:132, 300:334),
@@ -34,45 +40,6 @@ selected_windows <- list('A1-1' = 0:136,
                          'C2-3' = c(0:304,323:361)
                          )
 
-plot_contour_positions_on_organoid <- function (sample, range=NULL){
-  if(!is.null(range)){
-    p <- df_meta  %>% filter(organoid==sample) %>% filter(window %in% range) %>%
-         map_to_image(image = paste0(dir_dapi,'/',image_files[sample]))
-  } else {
-    p <- df_meta  %>% filter(organoid==sample) %>%
-         map_to_image(image = paste0(dir_dapi,'/',image_files[sample]))
-  }
-
-  p <- p + theme_void()
-  return(p)
-}
-# image mapping function
-map_to_image <- function(df, image) {
-
-  image <- image_read(image)  %>% image_normalize()
-  width <- image_info(image) %>% pull(width)
-  height <- image_info(image) %>% pull(height)
-
-  df_plot <- df  %>% mutate(Y = height - y, X = x - 1)
-  # set image as background in the plot
-  bg <- rasterGrob(image, width = unit(1, 'npc'), height = unit(1, 'npc'), interpolate = TRUE)
-
-  p1 <- ggplot(df_plot, aes(x = X, y = Y, col=window)) +
-    coord_fixed() +
-    annotation_custom(grob = bg,
-                      xmin = 0,
-                      xmax = width,
-                      ymin = 0,
-                      ymax = height) +
-    scale_x_continuous(limits = c(0, width),
-                       expand = c(0, 0)) +
-    scale_y_continuous(limits = c(0, height),
-                       expand = c(0, 0)) +
-    geom_point()+
-    scale_color_viridis_c() +
-    xlab('') + ylab('')  #transparent legend panel
-  return(p1)
-}
 
 extract_celltypes_by_dpt_rank <- function(result.list){
   dpt_cell_list <- result.list$seu_4i@assays$DptRankWindow@data %>% apply(1, function(x){names(x[x==1])})
@@ -330,9 +297,6 @@ map_fish_windows_to_trajectory_bulk <- function(fish_window, df_fish_windows, df
   }
 
 }
-
-
-
 
 map_fish_windows_to_trajectory <- function(fish_window, df_fish_windows, df_4i_windows, features, max_distance=100){
   # set up variables and dataframes

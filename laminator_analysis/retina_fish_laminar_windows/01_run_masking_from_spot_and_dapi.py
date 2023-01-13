@@ -1,5 +1,5 @@
 import os
-from skimage.filters import (gaussian, threshold_otsu)
+from skimage.filters import gaussian, threshold_otsu
 from skimage import img_as_uint
 import matplotlib.pyplot as plt
 from skimage import io

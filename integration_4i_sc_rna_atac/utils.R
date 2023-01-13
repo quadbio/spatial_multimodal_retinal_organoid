@@ -8,7 +8,7 @@ library(furrr)
 library(pracma)
 library(secr)
 
-# define function for CCA integration of 4I datasets
+# define function for CCA integration of 4i datasets
 integrate_4i <- function(seu_objects, dim=30){
   anchors_integration <- FindIntegrationAnchors(object.list = seu_objects, dims = 1:dim,  reduction = 'cca')
   seu_integrated <- IntegrateData(anchorset = anchors_integration, dims = 1:dim) %>% ScaleData() %>%
@@ -164,46 +164,3 @@ run_integration_pipeline <- function(week_4i, week_rna, seu_rna, seu_objects_4i,
     return(results)
   }
 }
-
-get_wedge_coordinates <- function(x, y, angle, width, height){
-  width <- width/2
-  coords <- cbind(c(x+width, x+width, x-width, x-width),
-                  c(y, y-height,y-height, y))
-  coords_rotated <- rotate(coords, degrees=(angle-180)*-1, centrexy=c(x,y))
-  colnames(coords_rotated) <- c('x','y')
-  return(coords_rotated)
-}
-
-map_nuclei_to_wedge <- function(wedge_id, df_meta, df_nuclei){
-  df_meta <- df_meta %>% filter(id == wedge_id)
-  organoid_id <- df_meta %>% pull(organoid) %>% as.numeric()
-  df_nuclei <- df_nuclei %>% filter(organoid == organoid_id)
-  coords_wedge <- get_wedge_coordinates(df_meta$x, df_meta$y, df_meta$angle, df_meta$slice_width, df_meta$window_size)
-  df_nuclei$in_wedge <- inpolygon(df_nuclei %>% pull(X),
-                                  df_nuclei %>% pull(Y),
-                                  coords_wedge[,1],
-                                  coords_wedge[,2])
-  return(df_nuclei %>% filter(in_wedge))
-}
-
-euclidean <- function(a, b) {
-  sqrt(sum((a - b)^2))
-}
-
-get_distance_to_contour <- function(ids,x,y, df_contours){
-  M <- df_contours  %>% select(x,y) %>% as.matrix()
-  positions <- cbind(x,y)
-  rownames(positions) <- ids
-  apply(positions, 1,
-        function(x){apply(M, 1, euclidean, b=x) %>% min() %>% unique()}
-  )
-}
-
-calculate_distances_to_contour <- function (point, df_nuclei, df_contours){
-  df_contours <- df_contours %>% filter(organoid==point)
-  df_nuclei <- df_nuclei %>%
-    filter(organoid==point) %>%
-    mutate(distance_to_contour = get_distance_to_contour(ids = ID, x = X, y = Y, df_contours = df_contours))
-  return(df_nuclei)
-}
-

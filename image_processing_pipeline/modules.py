@@ -88,8 +88,7 @@ def simple_mask(point, dir_input, dir_output, cycle='cycle1', save=True, plot=Fa
 
         # get filename
         img_df = get_metadata(Path(data_path, 'raw_data'))
-        filename = \
-        img_df.loc[(img_df['well_id'] == point) & (img_df['cycle_id'] == cycle) & (img_df['stain'] == 'hoechst')][
+        filename = img_df.loc[(img_df['well_id'] == point) & (img_df['cycle_id'] == cycle) & (img_df['stain'] == 'hoechst')][
             'file'].values[0]
 
         # Load image

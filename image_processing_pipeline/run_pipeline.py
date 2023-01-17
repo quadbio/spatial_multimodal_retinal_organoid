@@ -11,7 +11,7 @@ with open("params.yml", 'r') as ymlfile:
     cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
 globals().update(cfg)
-r_path = str(Path('/usr/local/R-4.0.3/bin/Rscript'))  # path to r interpreter
+r_path = str(Path('/usr/local/R-4.0.3/bin/Rscript'))  # path to r interpreter fSOM works with R-4.0.3 but not the latest version.
 
 # run pipeline
 for well in wells:
@@ -19,7 +19,7 @@ for well in wells:
     print('simple masking sample:' + str(well))
     modules.simple_mask(point=well, cycle=ref_cycles[0],
                         dir_input=data_path,
-                        dir_output=data_path + 'masks/',
+                        dir_output=data_path + '/masks/',
                         save=True,
                         plot=False,
                         show_plot=False,

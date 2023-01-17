@@ -11,7 +11,7 @@ with open("params.yml", 'r') as ymlfile:
     cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
 
 globals().update(cfg)
-r_path = str(Path('/usr/local/R-4.0.3/bin/Rscript'))  # path to r interpreter fSOM works with R-4.0.3 but not the latest version.
+r_path = str(Path('/usr/local/R-4.0.3/bin/Rscript'))  # path to r interpreter. fSOM works with R-4.0.3 but not the latest version.
 
 # run pipeline
 for well in wells:

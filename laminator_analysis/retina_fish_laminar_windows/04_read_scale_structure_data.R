@@ -1,8 +1,4 @@
-source('~/4i_organoid_pipeline/retina/rotator_analysis/utils.R')
-dir_results <- '/links/groups/treutlein/DATA/imaging/charmel/32955-slide928-2_submission'
-dir_rotator <- str_c(dir_results,'/rotator_results')
-
-
+source('laminator_analysis/utils.R')
 
 z_scoring_age_sample <- function(df){
     message("Z-scoring across stain, age and sample...")
@@ -26,7 +22,7 @@ z_scoring_age_sample <- function(df){
 
 
 
-read_and_process_rotator_results <- function(dir,samples=NULL,dir_output='/local2/USERS/charmel/rotator_dataset_fish_2/'){
+read_and_process_rotator_results <- function(dir,samples=NULL,dir_output='data/processed/4i/laminator/dataset_fish/'){
     directories <- list.files(dir, full.names = 1)
     names(directories) <- list.files(dir)
     if(!is.null(samples)){
@@ -54,7 +50,7 @@ read_and_process_rotator_results <- function(dir,samples=NULL,dir_output='/local
       mutate(n_organoids=length(unique(organoid))) %>% group_by(stain) %>%
       mutate(n_stain=n()) %>% filter(n_stain==n_organoids) %>% distinct(stain) %>%
       pull(stain)
-
+    dir.create(dir_output)
     for (i in seq_along(shared_transcripts)){
       message('Saving intensity profiles for: ', shared_transcripts[i])
       df_intensity %>% filter(stain == shared_transcripts[i]) %>% write.csv(paste0(dir_output,shared_transcripts[i],'.csv'))
@@ -65,4 +61,4 @@ read_and_process_rotator_results <- function(dir,samples=NULL,dir_output='/local
     message('Done.')
 }
 
-read_and_process_rotator_results(dir_rotator)
+read_and_process_rotator_results('data/processed/fish/laminator/results_fish')

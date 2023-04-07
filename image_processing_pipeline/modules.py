@@ -87,9 +87,8 @@ def simple_mask(point, dir_input, dir_output, cycle='cycle1', save=True, plot=Fa
     if not os.path.isfile(str(Path(dir_output, 'simple_initial_mask' + str(point) + '.tif'))):
 
         # get filename
-        img_df = get_metadata(Path(data_path, 'raw_data'))
-        filename = \
-        img_df.loc[(img_df['well_id'] == point) & (img_df['cycle_id'] == cycle) & (img_df['stain'] == 'hoechst')][
+        img_df = get_metadata(str(Path(data_path, 'raw_data')))
+        filename = img_df.loc[(img_df['well_id'] == point) & (img_df['cycle_id'] == cycle) & (img_df['stain'] == 'hoechst')][
             'file'].values[0]
 
         # Load image
@@ -140,7 +139,7 @@ def simple_mask(point, dir_input, dir_output, cycle='cycle1', save=True, plot=Fa
         # Save mask
         if save:
             Path(dir_output).mkdir(parents=True, exist_ok=True)
-            io.imsave(str(Path(dir_output, 'simple_initial_mask' + str(point) + '.tif')), img_as_uint(img),
+            io.imsave(str(Path(dir_output, 'simple_initial_mask' + str(point) + '.tif')), img.astype('bool'),
                       check_contrast=False)
 
         # Plot mask
@@ -187,7 +186,7 @@ def run_elastix(point, ref_cycles, dir_mask, dir_output, cycles=cycles,
     print('Set initial reference to:', ref_cycles[0])
 
     # image info df
-    img_df = get_metadata(Path(data_path, 'raw_data'))
+    img_df = get_metadata(str(Path(data_path, 'raw_data')))
 
     # Set reference cycle
     ref_imgs = img_df.loc[(img_df['well_id'] == point) & (img_df['cycle_id'] == ref_cycles[0])]['file'].to_list()
@@ -317,12 +316,12 @@ def denoise_well(well=0):
     mask = io.imread(data_path + 'masks/simple_initial_mask' + str(well) + '.tif').astype('int')
 
     if not os.path.isfile(data_path + 'masks/cropped_simple_mask' + str(well) + '.tif'):
-        cropped_mask = crop_image(img=mask, mask=mask)
-        io.imsave(data_path + 'masks/cropped_simple_mask' + str(well) + '.tif', cropped_mask.astype(int),
+        cropped_mask = crop_image(img=mask, mask=mask).astype('uint8')
+        io.imsave(data_path + 'masks/cropped_simple_mask' + str(well) + '.tif', cropped_mask.astype('bool'),
                   check_contrast=False)
 
     else:
-        cropped_mask = io.imread(data_path + 'masks/cropped_simple_mask' + str(well) + '.tif')
+        cropped_mask = io.imread(data_path + 'masks/cropped_simple_mask' + str(well) + '.tif').astype('uint8')
 
     img_df = get_metadata(Path(data_path, 'raw_data'))
     filenames = img_df.loc[(img_df['well_id'] == well)]['file'].to_list()
@@ -337,7 +336,7 @@ def denoise_well(well=0):
 
             del img
             os.makedirs(data_path + 'denoised/', exist_ok=True)
-            io.imsave(Path(data_path, 'denoised', i), tmp)
+            io.imsave(str(Path(data_path, 'denoised', i)), tmp.astype('uint16'), check_contrast=False)
 
 
 # create a tight mask in order to restrict the analysis to pixels inside the tissue that were imaged in every cycle
@@ -347,9 +346,8 @@ def refine_mask(well=0):
         old_mask = io.imread(data_path + '/masks/cropped_simple_mask' + str(well) + '.tif').astype('bool')
         imgs = []
 
-        img_df = get_metadata(Path(data_path, 'denoised'))
-        filenames = \
-        img_df.loc[(img_df['well_id'] == well) & (img_df['cycle_id'].isin([1, 2, 3, 4, 5, 7, 8, 9, 10, 11]))][
+        img_df = get_metadata(str(Path(data_path, 'denoised')))
+        filenames = img_df.loc[(img_df['well_id'] == well) & (img_df['cycle_id'].isin([1, 2, 3, 4, 5, 7, 8, 9, 10, 11]))][
             'file'].to_list()
         filenames = sorted_nicely(filenames)
         for i in filenames:
@@ -446,7 +444,7 @@ def bg_subtraction(well,
 
     # Load and save dapi image
     img = io.imread(Path(dir_input, file_dapi))
-    io.imsave(Path(dir_output, file_dapi), img, check_contrast=False)
+    io.imsave(str(Path(dir_output, file_dapi)), img, check_contrast=False)
 
     # Load mask
     mask = io.imread(Path(dir_masks, 'cropped_refined_mask' + str(well) + '.tif'))
@@ -493,7 +491,7 @@ def bg_subtraction(well,
                 img = img * mask
                 img_subtracted = img.astype(np.uint16)
 
-                io.imsave(Path(dir_output, file_image), img_subtracted, check_contrast=False)
+                io.imsave(str(Path(dir_output, file_image)), img_subtracted, check_contrast=False)
             else:
                 print(file_image + 'already processed. skipping')
     else:
@@ -529,7 +527,7 @@ def segment_nuclei(well,
                                                  flow_threshold=flow_thr, cellprob_threshold=cellprob_thr)
 
         os.makedirs(dir_output, exist_ok=True)
-        io.imsave(Path(dir_output, str(well) + '.tif'), masks)
+        io.imsave(str(Path(dir_output, str(well) + '.tif')), masks)
     else:
         print('well ' + str(well) + ' nuclei already segmented')
 
@@ -594,7 +592,7 @@ def generate_pixel_matrices(well=0,
 
         pixel_matrix = full_matrix
         dir_output.mkdir(parents=True, exist_ok=True)
-        np.savez_compressed(Path(dir_output, str(well) + 'raw_pixel_matrix.npz'), pixel_matrix)
+        np.savez_compressed(str(Path(dir_output, str(well) + 'raw_pixel_matrix.npz')), pixel_matrix)
     else:
         print(str(well) + ' pixel matrix already exists')
 
@@ -626,7 +624,7 @@ def get_collagen_mask(well, colname):
         colmask = cv2.erode(img2, kernel, iterations=5).astype('int8')
 
         Path(data_path + '/refined_masks/').mkdir(parents=True, exist_ok=True)
-        io.imsave(Path(data_path, 'refined_masks/collagen_mask' + str(well) + '.tif'), colmask, check_contrast=False)
+        io.imsave(str(Path(data_path, 'refined_masks/collagen_mask' + str(well) + '.tif')), colmask, check_contrast=False)
     else:
         colmask = io.imread(data_path + 'refined_masks/collagen_mask' + str(well) + '.tif')
 
@@ -684,13 +682,13 @@ def run_matrix_normalization(wells,
 
         # scale and save fusion matrix
         scaled_long_matrix = scale_matrix(long_matrix, bottom_percentiles, top_percentiles)
-        np.savez_compressed(Path(dir_output, 'scaled_fusion_sub250_z_normalised_pixel_matrix.npz'),
+        np.savez_compressed(str(Path(dir_output, 'scaled_fusion_sub250_z_normalised_pixel_matrix.npz')),
                             scaled_long_matrix.astype('float32'))
 
         # scale and save sample matrices
         for i in np.arange(len(matrices)):
             mat = scale_matrix(normalized_mats[i], bottom_percentiles, top_percentiles)
-            np.savez_compressed(Path(dir_output, str(wells[i]) + 'scaled_z_normalised_pixel_matrix.npz'),
+            np.savez_compressed(str(Path(dir_output, str(wells[i]) + 'scaled_z_normalised_pixel_matrix.npz')),
                                 mat.astype('float32'))
 
 
@@ -787,7 +785,7 @@ def MTU_assignment(well=43,
     cluster_img[mask] = pixel_cluster_labels
 
     os.makedirs(Path(dir_output, str(well)), exist_ok=True)
-    io.imsave(Path(dir_output, str(well), 'labelimg.tif'), cluster_img.astype('uint8'), check_contrast=False)
+    io.imsave(str(Path(dir_output, str(well), 'labelimg.tif')), cluster_img.astype('uint8'), check_contrast=False)
 
     # compute sample specific heatmap showing how stains relate to MTUs
 
@@ -857,7 +855,7 @@ def MTU_assignment(well=43,
     cbar.set_label("Marker intensity (z-score)", fontsize=60)
     cbar.ax.tick_params(labelsize=45)
 
-    cm.savefig(Path(dir_output, str(well), "MTU_heatmap.pdf"), bbox_inches="tight")
+    cm.savefig(str(Path(dir_output, str(well), "MTU_heatmap.pdf")), bbox_inches="tight")
     plt.close()
 
     print('MTU heatmap created')
@@ -883,7 +881,7 @@ def MTU_assignment(well=43,
     #    text.set_color("white")
 
     ax.set(xlim=[-0.5, width - 0.5], ylim=[height - 0.5, -0.5], aspect=1)
-    fig.savefig(Path(dir_output, str(well), "MTU_imag.pdf"), dpi=dpi, transparent=True)
+    fig.savefig(str(Path(dir_output, str(well), "MTU_image.pdf")), dpi=dpi, transparent=True)
     plt.close(fig)
 
     print('MTU image pdf done')
@@ -901,7 +899,7 @@ def MTU_assignment(well=43,
         ax.axis("off")
         ax.set(xlim=[-0.5, width - 0.5], ylim=[height - 0.5, -0.5], aspect=1)
 
-        fig.savefig(Path(dir_output, str(well) + '/single_MTU_imgs', str(cluster) + '.png'), dpi=dpi, transparent=True)
+        fig.savefig(str(Path(dir_output, str(well) + '/single_MTU_imgs', str(cluster) + '.png')), dpi=dpi, transparent=True)
         plt.close(fig)
 
     print(str(well) + ' MTUs done')
@@ -1032,7 +1030,7 @@ def run_nuclear_features_table(well=43,
             [marker_independent_property_table, marker_dependent_property_table, clustercount, radial_distance], axis=1)
 
         os.makedirs(Path(dir_output), exist_ok=True)
-        property_table.to_csv(Path(dir_output, str(well) + '_feature_table.csv'), sep=',', line_terminator='\n',
+        property_table.to_csv(str(Path(dir_output, str(well) + '_feature_table.csv')), sep=',', line_terminator='\n',
                               encoding="ISO-8859-1")
     else:
         print('nuclei features already exist' + str(well))

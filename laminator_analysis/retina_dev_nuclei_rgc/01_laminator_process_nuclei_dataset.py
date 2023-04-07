@@ -1,27 +1,24 @@
 import os
 from pathlib import Path
-import numpy as np
-import pandas as pd
 from time import gmtime, strftime
 import re
 from skimage import io
+from multiprocessing import Pool, RawArray
+import numpy as np
+from tqdm import tqdm
+import pandas as pd
 
 def load_mask(path):
-    from skimage import io
     img = io.imread(path)
     return img
 
 def load_images(paths):
-    from tqdm import tqdm
-    from skimage import io
-    import numpy as np
     imgs = []
     for path in tqdm(paths):
         img = io.imread(path)
         imgs.append(img)
     imgs = np.dstack(imgs)
     return imgs
-
 
 # Init worker function which creates shared variables
 def init_worker(X, X_shape):
@@ -34,11 +31,7 @@ def setup_shared_variables():
     var_dict = {}
 
 def calculate_radial_profiles(df, max_radius, stack, mask, label_img):
-    from multiprocessing import Pool, RawArray
-    from functools import partial
-    import numpy as np
-    from tqdm import tqdm
-    import pandas as pd
+
     df['y']=np.round(df['centroid-0'].values)
     df['x']=np.round(df['centroid-1'].values)
 
@@ -50,24 +43,20 @@ def calculate_radial_profiles(df, max_radius, stack, mask, label_img):
     # Wrap as numpy array and copy data to shared array
     X_np = np.frombuffer(X).reshape(stack.shape)
     np.copyto(X_np, stack)
-    from functools import partial
     # Start the process pool and do the computation
     with Pool(processes=50, initializer=init_worker, initargs=(X, X_shape)) as pool:
         result = pool.starmap(radial_profile_multi, zip(df['x'].values, df['y'].values))
 
     return(result)
 
-dir_images = '/links/groups/treutlein/DATA/imaging/charmel/shiny_input'
-points = os.listdir('/links/groups/treutlein/DATA/imaging/charmel/shiny_input')
-dir_results = '/links/groups/treutlein/DATA/imaging/charmel/laminator_analysis_nuclei'
-dir_masks = '/links/groups/treutlein/DATA/imaging/charmel/refined_masks'
+dir_images = 'data/raw/4i/images'
+points = os.listdir(dir_images)
+dir_results = 'data/processed/4i/laminator/results_nuclei'
+dir_masks = 'data/processed/4i/masks'
 masks = os.listdir(dir_masks)
-masks = [mask for mask in masks if '_pw_' in mask]
-
-points = points[46:]
 
 for point in points:
-    print('Started laminator in nuclei mode...')
+    print('Started Laminator in nuclei mode...')
     print(strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ' - Processing sample: ' + str(point))
 
     dir_results_point = Path(dir_results, str(point))
@@ -78,18 +67,18 @@ for point in points:
     dir_images_point = Path(dir_images, str(point))
     image_paths = os.listdir(dir_images_point)
     image_paths = [Path(dir_images_point, path) for path in image_paths if 'channel' in path]
-    index_hoechst = [str(path) for path in image_paths].index(str(Path(dir_images_point, 'channel_hoechst.tif')))
+    index_hoechst = [str(path) for path in image_paths].index(str(Path(dir_images_point, 'channel_hoechst')))
     pd.DataFrame({'file':[str(path) for path in image_paths]}).reset_index().to_csv(Path(dir_results_point, 'stain_paths.csv'), index=False)
 
     # load nuclei dataset
     df_nuclei = pd.read_csv(
-        '/links/groups/treutlein/DATA/imaging/charmel/seq_integration/nuclei_expression/expression_by_nucleus_'+point+'.txt',
+        'data/processed/4i/feature_tables/'+point+'_feature_table.csv',
         sep=' ')
     print(strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ' - Loading images...')
     # load mask
     mask = load_mask(path_mask)
     # load label image
-    label_img = io.imread('/links/groups/treutlein/DATA/imaging/charmel/segmented/cropped_'+point+'.tif')
+    label_img = io.imread('data/processed/4i/segmented_nuclei/'+point+'.tif')
     # load images
     stack = load_images(image_paths)
 

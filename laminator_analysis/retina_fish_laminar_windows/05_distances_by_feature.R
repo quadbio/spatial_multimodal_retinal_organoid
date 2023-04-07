@@ -1,16 +1,11 @@
-# Title     : 2_distances_by_feature.R
-# Objective : Runs profile distance analysis for the whole dataset
-# Created by: harmelc
-# Created on: 14.09.21
+# load libraries
+library(TSdist)
+library(tidyverse)
+library(furrr)
+library(FBN)
 
-suppressPackageStartupMessages({
-  library(TSdist)
-  library(tidyverse)
-  library(furrr)
-  library(FBN)
-})
-
-setwd('/local2/USERS/charmel/rotator_dataset_fish_2/')
+# set working directory
+setwd('data/processed/4i/laminator/dataset_fish')
 
 # list files of feature datasets
 files <- list.files(pattern='.csv')
@@ -42,5 +37,7 @@ get_distances_by_feature <- function(file, measure='fourier') {
 message("Calculating fourier distances with future...")
 distance_matrices <- future_map(files,get_distances_by_feature, measure='fourier')
 message("Saving fourier distance matrices...")
-saveRDS(distance_matrices, '/local2/USERS/charmel/rotator_analysis_results_fish/distance_matrices.rds')
+dir_results <- 'data/processed/fish/laminator/analysis_results/'
+dir.create(dir_results)
+saveRDS(distance_matrices, paste0(dir_results,'distance_matrices_fourier_fish.rds'))
 
